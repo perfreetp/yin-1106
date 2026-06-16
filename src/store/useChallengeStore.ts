@@ -4,6 +4,7 @@ import { challengeLevels, challengeQuestions } from '../data/challenges';
 import { validateChallengeAnswer } from '../utils/validation';
 import { generateId, getRandomItems } from '../utils/helpers';
 import { storage } from '../utils/storage';
+import { useMistakesStore } from './useMistakesStore';
 
 interface ChallengeState {
   levels: ChallengeLevel[];
@@ -81,7 +82,7 @@ export const useChallengeStore = create<ChallengeState>((set, get) => ({
       userAnswers: {},
       answers: [],
       startTime: null,
-      timeRemaining: level ? level.timeLimit : 0,
+      timeRemaining: level ? level.timeLimit * 60 : 0,
       attemptId: null,
       isSubmitted: false,
       isPaused: false,
@@ -96,7 +97,15 @@ export const useChallengeStore = create<ChallengeState>((set, get) => ({
 
     const levelQuestions = level.questionIds
       .map((id) => get().questions.find((q) => q.id === id))
-      .filter((q): q is ChallengeQuestion => q !== undefined);
+      .filter((q): q is ChallengeQuestion => q !== undefined)
+      .map((q) => {
+        let normalizedType = q.type;
+        if (q.type === 'single_choice') normalizedType = 'single';
+        else if (q.type === 'multiple_choice') normalizedType = 'multiple';
+        else if (q.type === 'judgment') normalizedType = 'judge';
+        else if (q.type === 'fill_blank') normalizedType = 'fill';
+        return { ...q, type: normalizedType } as ChallengeQuestion;
+      });
 
     const shuffledQuestions = getRandomItems(levelQuestions, levelQuestions.length);
 
@@ -106,8 +115,8 @@ export const useChallengeStore = create<ChallengeState>((set, get) => ({
       currentQuestionIndex: 0,
       userAnswers: {},
       answers: [],
-      startTime: null,
-      timeRemaining: level.timeLimit,
+      startTime: Date.now(),
+      timeRemaining: level.timeLimit * 60,
       attemptId: generateId(),
       isSubmitted: false,
       isPaused: false,
@@ -122,14 +131,22 @@ export const useChallengeStore = create<ChallengeState>((set, get) => ({
 
     const levelQuestions = currentLevel.questionIds
       .map((id) => questions.find((q) => q.id === id))
-      .filter((q): q is ChallengeQuestion => q !== undefined);
+      .filter((q): q is ChallengeQuestion => q !== undefined)
+      .map((q) => {
+        let normalizedType = q.type;
+        if (q.type === 'single_choice') normalizedType = 'single';
+        else if (q.type === 'multiple_choice') normalizedType = 'multiple';
+        else if (q.type === 'judgment') normalizedType = 'judge';
+        else if (q.type === 'fill_blank') normalizedType = 'fill';
+        return { ...q, type: normalizedType } as ChallengeQuestion;
+      });
 
     const shuffledQuestions = getRandomItems(levelQuestions, levelQuestions.length);
 
     set({
       currentQuestions: shuffledQuestions,
       startTime: Date.now(),
-      timeRemaining: currentLevel.timeLimit,
+      timeRemaining: currentLevel.timeLimit * 60,
       attemptId: generateId(),
       currentQuestionIndex: 0,
       userAnswers: {},
@@ -179,8 +196,17 @@ export const useChallengeStore = create<ChallengeState>((set, get) => ({
       showResult: true,
     });
 
+    if (result.isCorrect) {
+      try {
+        useMistakesStore.getState().initMistakes();
+        useMistakesStore.getState().markAsMastered(question.id, 'challenge');
+      } catch (_) {
+        // ignore
+      }
+    }
+
     if (!result.isCorrect) {
-      const mistakes = storage.get<Mistake[]>('mistakes', []);
+      const mistakes = storage.get<Partial<Mistake>[]>('mistakes', []);
       const existingIndex = mistakes.findIndex(
         (m) => m.challengeQuestionId === question.id && m.type === 'challenge'
       );
@@ -189,7 +215,14 @@ export const useChallengeStore = create<ChallengeState>((set, get) => ({
       if (existingIndex >= 0) {
         newMistakes = mistakes.map((m, i) =>
           i === existingIndex
-            ? { ...m, retryCount: m.retryCount + 1, timestamp: Date.now(), reviewed: false }
+            ? { 
+                ...m, 
+                retryCount: (m.retryCount || 0) + 1, 
+                timestamp: Date.now(), 
+                reviewed: false,
+                mastered: false,
+                correctRetryCount: m.correctRetryCount || 0,
+              }
             : m
         );
       } else {
@@ -208,13 +241,20 @@ export const useChallengeStore = create<ChallengeState>((set, get) => ({
           questionContent: question.content,
           timestamp: Date.now(),
           reviewed: false,
+          mastered: false,
           retryCount: 0,
+          correctRetryCount: 0,
           explanation: question.explanation,
           score: 0,
         };
         newMistakes = [...mistakes, newMistake];
       }
       storage.set('mistakes', newMistakes);
+      try {
+        useMistakesStore.getState().initMistakes();
+      } catch (_) {
+        // ignore
+      }
     }
 
     return result;

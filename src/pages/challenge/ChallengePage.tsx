@@ -63,21 +63,19 @@ const ChallengePage = () => {
   }, [timeRemaining, isSubmitted, finishChallenge]);
 
   useEffect(() => {
-    if (isSubmitted && showResult) {
-      const currentAnswerData = answers[currentQuestionIndex];
-      if (currentAnswerData && !currentAnswerData.isCorrect) {
-        const timer = setTimeout(() => {
-          if (isLastQuestion) {
-            finishChallenge();
-          } else {
-            nextQuestion();
-            setShowHint(false);
-          }
-        }, 2500);
-        return () => clearTimeout(timer);
-      }
+    if (showResult && !isSubmitted) {
+      const timer = setTimeout(() => {
+        if (isLastQuestion) {
+          const attempt = finishChallenge();
+          navigate(`/challenge/result/${attempt.id}`);
+        } else {
+          nextQuestion();
+          setShowHint(false);
+        }
+      }, 1800);
+      return () => clearTimeout(timer);
     }
-  }, [isSubmitted, showResult, currentQuestionIndex, isLastQuestion, answers, nextQuestion, finishChallenge]);
+  }, [showResult, isSubmitted, currentQuestionIndex, isLastQuestion, nextQuestion, finishChallenge, navigate]);
 
   const handleToggleOption = (option: string) => {
     if (showResult) return;

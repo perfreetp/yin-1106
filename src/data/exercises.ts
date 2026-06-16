@@ -46,6 +46,8 @@ export const exercises: PracticeExercise[] = [
     type: 'acceptance_condition',
     difficulty: 'easy',
     estimatedTime: 8,
+    itemType: '行政许可',
+    itemName: '建筑业企业资质认定',
     question: '请为"建筑业企业资质认定"事项编写受理条件，要求明确申请主体资格、注册资本、人员配置等方面的要求。',
     legalBasisOptions: [
       {
@@ -88,6 +90,8 @@ export const exercises: PracticeExercise[] = [
     type: 'acceptance_condition',
     difficulty: 'medium',
     estimatedTime: 10,
+    itemType: '行政给付',
+    itemName: '职业技能培训补贴申领',
     question: '请为"职业技能培训补贴申领"事项编写受理条件，该补贴面向参加职业技能培训的劳动者。',
     legalBasisOptions: [
       {
@@ -121,6 +125,8 @@ export const exercises: PracticeExercise[] = [
     type: 'acceptance_condition',
     difficulty: 'hard',
     estimatedTime: 12,
+    itemType: '行政许可',
+    itemName: '户外广告设置审批',
     question: '以下是某单位编制的"户外广告设置审批"受理条件，请找出其中不合法或不合理的内容，并重新编写规范的受理条件。\n\n原受理条件：\n1. 申请人需提交申请；\n2. 具有相应的经济实力；\n3. 符合有关规定；\n4. 经市容环境卫生行政主管部门同意；\n5. 申请人为本地企业。',
     legalBasisOptions: [
       {
@@ -154,6 +160,8 @@ export const exercises: PracticeExercise[] = [
     type: 'application_material',
     difficulty: 'easy',
     estimatedTime: 8,
+    itemType: '行政许可',
+    itemName: '有限责任公司设立登记',
     question: '请为"有限责任公司设立登记"事项编写申请材料清单，要求明确材料名称、来源、形式、份数等要素。',
     legalBasisOptions: [
       {
@@ -181,6 +189,8 @@ export const exercises: PracticeExercise[] = [
     type: 'application_material',
     difficulty: 'medium',
     estimatedTime: 10,
+    itemType: '行政许可',
+    itemName: '食品经营许可证变更',
     question: '以下是某单位编制的申请材料清单，请找出不规范之处并予以修正。\n\n原材料清单：\n1. 相关证明材料；\n2. 执照；\n3. 身份证件；\n4. 申请表（盖章）；\n5. 其它材料。',
     legalBasisOptions: [
       {
@@ -207,6 +217,8 @@ export const exercises: PracticeExercise[] = [
     type: 'application_material',
     difficulty: 'medium',
     estimatedTime: 8,
+    itemType: '行政确认',
+    itemName: '不动产权属转移登记',
     question: '请为"不动产权属转移登记"事项编写申请材料清单，并标注哪些材料可以通过数据共享获取，免予提交纸质材料。',
     legalBasisOptions: [
       {
@@ -240,6 +252,8 @@ export const exercises: PracticeExercise[] = [
     type: 'legal_basis',
     difficulty: 'easy',
     estimatedTime: 6,
+    itemType: '行政许可',
+    itemName: '劳务派遣经营许可',
     question: '请为"劳务派遣经营许可"事项规范引用法定依据，要求引用到具体条款项。',
     legalBasisOptions: [
       {
@@ -280,6 +294,8 @@ export const exercises: PracticeExercise[] = [
     type: 'legal_basis',
     difficulty: 'medium',
     estimatedTime: 8,
+    itemType: '行政许可',
+    itemName: '行政审批事项清理',
     question: '以下是某事项引用的法定依据，请找出其中已废止或失效的依据，并说明理由。\n\n原引用依据：\n1. 《中华人民共和国行政许可法》（2003年）第十二条；\n2. 《XX省私营企业条例》（1994年）第十五条；\n3. 《公司登记管理条例》（2014年修订）第二十条；\n4. 《国务院关于第二批取消152项中央指定地方实施行政审批事项的决定》（国发〔2016〕9号）；\n5. 《XX市暂住人口管理办法》（市政府令第45号，2001年）。',
     legalBasisOptions: [
       {
@@ -313,6 +329,8 @@ export const exercises: PracticeExercise[] = [
     type: 'legal_basis',
     difficulty: 'hard',
     estimatedTime: 12,
+    itemType: '行政许可',
+    itemName: '教师资格认定',
     question: '以下是某事项的受理条件和对应的法定依据，请判断依据是否能够支撑受理条件，并说明理由。\n\n事项：教师资格认定\n\n受理条件：\n1. 申请人应当具有中华人民共和国国籍；\n2. 年龄不超过60周岁；\n3. 具备《教师法》规定的相应学历；\n4. 具有良好的身体素质和心理素质；\n5. 具有二级乙等以上普通话水平测试等级证书。\n\n法定依据：\n《中华人民共和国教师法》第十条：国家实行教师资格制度。中国公民凡遵守宪法和法律，热爱教育事业，具有良好的思想品德，具备本法规定的学历或者经国家教师资格考试合格，有教育教学能力，经认定合格的，可以取得教师资格。\n\n《教师资格条例》第六条：教师资格条件依照教师法第十条第二款的规定执行，其中"有教育教学能力"应当包括符合国家规定的从事教育教学工作的身体条件、普通话水平等。\n\n《实施办法》第八条：申请认定教师资格者的普通话水平，应当达到国家语言文字工作委员会颁布的《普通话水平测试等级标准》二级乙等以上标准。',
     legalBasisOptions: [
       {
@@ -339,6 +357,8 @@ export const exercises: PracticeExercise[] = [
     type: 'time_limit',
     difficulty: 'easy',
     estimatedTime: 6,
+    itemType: '行政许可',
+    itemName: '社会团体成立登记',
     question: '请为以下事项规范设置承诺时限，要求区分法定时限和承诺时限，并说明压缩比例。\n\n事项：社会团体成立登记\n已知法定时限：30个工作日',
     legalBasisOptions: [
       {
@@ -372,6 +392,8 @@ export const exercises: PracticeExercise[] = [
     type: 'time_limit',
     difficulty: 'medium',
     estimatedTime: 8,
+    itemType: '公共服务',
+    itemName: '政务服务事项办理时限管理',
     question: '以下是某单位编制的办理时限，请找出不规范之处并予以修正。\n\n原时限设置：\n1. 办理时限：尽快办理；\n2. 法定期限：30天，承诺期限：45天；\n3. 办理时限：自受理之日起15个工作日（含专家评审10个工作日）；\n4. 办理时限：材料齐全后即时办理。',
     legalBasisOptions: [
       {
@@ -398,6 +420,8 @@ export const exercises: PracticeExercise[] = [
     type: 'time_limit',
     difficulty: 'hard',
     estimatedTime: 10,
+    itemType: '行政许可',
+    itemName: '建设项目用地预审与选址意见书核发',
     question: '请为"建设项目用地预审与选址意见书核发"事项设置办理时限，要求分解为受理、审查、决定、发证四个环节，并明确各环节时限。\n\n已知信息：\n- 法定时限：20个工作日\n- 该事项需要现场核查（约3个工作日）\n- 需要征求自然资源部门内部相关科室意见',
     legalBasisOptions: [
       {
@@ -424,6 +448,8 @@ export const exercises: PracticeExercise[] = [
     type: 'reduction',
     difficulty: 'easy',
     estimatedTime: 8,
+    itemType: '行政许可',
+    itemName: '医师执业注册',
     question: '请为"医师执业注册"事项编写可免予提交材料的情形，结合"互联网+政务服务"改革要求。',
     legalBasisOptions: [
       {
@@ -457,6 +483,8 @@ export const exercises: PracticeExercise[] = [
     type: 'reduction',
     difficulty: 'medium',
     estimatedTime: 10,
+    itemType: '行政许可',
+    itemName: '公共场所卫生许可证延续',
     question: '请为"公共场所卫生许可证延续"事项编写容缺受理方案，明确可容缺的材料、补正期限和监管措施。',
     legalBasisOptions: [
       {
@@ -490,6 +518,8 @@ export const exercises: PracticeExercise[] = [
     type: 'reduction',
     difficulty: 'hard',
     estimatedTime: 12,
+    itemType: '行政许可',
+    itemName: '民办非企业单位成立登记',
     question: '请为"民办非企业单位成立登记"事项设计告知承诺制实施方案，该事项中的"验资报告"拟实行告知承诺制替代。',
     legalBasisOptions: [
       {

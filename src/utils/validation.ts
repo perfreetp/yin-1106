@@ -129,18 +129,76 @@ export const validateAnswer = (
     const timePattern = /(\d+)\s*(个)?(工作日|天|小时)/g;
     let match;
     let hasTimeLimit = false;
+    let commitmentDays = 0;
+    let legalDays = 0;
+    const allNumbers: number[] = [];
+
     while ((match = timePattern.exec(userAnswer)) !== null) {
       hasTimeLimit = true;
       const days = parseInt(match[1], 10);
-      if (days > 20) {
-        result.warnings.push('承诺时限过长，建议优化办理流程');
+      allNumbers.push(days);
+      if (match[3] === '工作日' || match[3] === '天') {
+        if (commitmentDays === 0 || days < commitmentDays) {
+          commitmentDays = days;
+        }
       }
     }
+
+    const numberPattern = /(\d+)\s*(个)?(工作日|天|小时)?/g;
+    let numMatch;
+    while ((numMatch = numberPattern.exec(exercise.correctAnswer)) !== null) {
+      const d = parseInt(numMatch[1], 10);
+      if (d > 1 && d <= 100) {
+        if (legalDays === 0 || d > legalDays) {
+          legalDays = d;
+        }
+      }
+    }
+
+    if (allNumbers.length > 0) {
+      const sorted = [...allNumbers].sort((a, b) => b - a);
+      legalDays = sorted[0] || legalDays;
+      commitmentDays = sorted[sorted.length - 1] || commitmentDays;
+    }
+
     if (!hasTimeLimit) {
       result.isValid = false;
       result.isCorrect = false;
       result.errors.push('未明确承诺时限，请添加具体的办理时限');
+    } else {
+      if (exercise.legalTimeLimit && exercise.legalTimeLimit.commitment) {
+        if (commitmentDays > exercise.legalTimeLimit.commitment) {
+          result.isValid = false;
+          result.isCorrect = false;
+          result.errors.push(`承诺时限(${commitmentDays}个工作日)超过建议标准(${exercise.legalTimeLimit.commitment}个工作日)，请进一步压缩`);
+        }
+        if (exercise.legalTimeLimit.legal && commitmentDays > exercise.legalTimeLimit.legal) {
+          result.isValid = false;
+          result.isCorrect = false;
+          result.errors.push(`承诺时限(${commitmentDays}个工作日)超过法定时限(${exercise.legalTimeLimit.legal}个工作日)，违反规范要求！`);
+        }
+      }
+      if (commitmentDays > 20) {
+        result.warnings.push('承诺时限过长，建议优化办理流程');
+      }
     }
+
+    const hasLegalMention = userAnswer.includes('法定时限') || userAnswer.includes('法定期限');
+    const hasCommitmentMention = userAnswer.includes('承诺时限') || userAnswer.includes('承诺期限');
+    const hasCompression = userAnswer.includes('压缩') || userAnswer.includes('优化');
+    const hasSpecialNote = userAnswer.includes('不计入') || userAnswer.includes('特殊环节') || userAnswer.includes('现场核查') || userAnswer.includes('专家评审');
+
+    let timeScoreBase = 0;
+    if (hasTimeLimit) timeScoreBase += 30;
+    if (hasLegalMention) timeScoreBase += 15;
+    if (hasCommitmentMention) timeScoreBase += 15;
+    if (hasCompression) timeScoreBase += 10;
+    if (hasSpecialNote) timeScoreBase += 10;
+    if (result.errors.length === 0 && hasTimeLimit) timeScoreBase += 20;
+
+    const originalSim = result.similarity || 0;
+    const combinedSim = Math.max(originalSim, timeScoreBase / 100);
+    result.similarity = combinedSim;
   }
 
   if (exercise.type === 'reduction') {
@@ -155,7 +213,16 @@ export const validateAnswer = (
     }
   }
 
-  result.score = Math.round((result.similarity || 0) * 100);
+  let finalScore = 0;
+  if (result.similarity !== undefined && result.similarity !== null && !isNaN(Number(result.similarity))) {
+    finalScore = Math.round(Number(result.similarity) * 100);
+  }
+  finalScore = Math.max(0, Math.min(100, finalScore));
+  result.score = finalScore;
+
+  if (result.score >= 80 && result.errors.length === 0) {
+    result.isCorrect = true;
+  }
 
   return result;
 };
@@ -168,22 +235,44 @@ export const validateChallengeAnswer = (
   let isCorrect = false;
   let explanation = '';
 
-  if (type === 'single_choice' || type === 'fill_blank') {
-    isCorrect = (userAnswer as string).trim() === (correctAnswer as string).trim();
+  const isSingleType = type === 'single_choice' || type === 'single';
+  const isMultipleType = type === 'multiple_choice' || type === 'multiple';
+  const isJudgeType = type === 'judgment' || type === 'judge';
+  const isFillType = type === 'fill_blank' || type === 'fill';
+
+  if (isSingleType) {
+    const userStr = Array.isArray(userAnswer) ? userAnswer[0] : userAnswer as string;
+    const correctStr = Array.isArray(correctAnswer) ? correctAnswer[0] : correctAnswer as string;
+    isCorrect = (userStr || '').trim() === (correctStr || '').trim();
     if (!isCorrect) {
-      explanation = `正确答案是: ${correctAnswer}`;
+      explanation = `正确答案是: ${correctStr}`;
     }
-  } else if (type === 'multiple_choice') {
-    const userArr = Array.isArray(userAnswer) ? userAnswer.sort() : [userAnswer].sort();
-    const correctArr = Array.isArray(correctAnswer) ? correctAnswer.sort() : [correctAnswer].sort();
-    isCorrect = JSON.stringify(userArr) === JSON.stringify(correctArr);
+  } else if (isFillType) {
+    const userStr = Array.isArray(userAnswer) ? userAnswer[0] : userAnswer as string;
+    const correctStr = Array.isArray(correctAnswer) ? correctAnswer[0] : correctAnswer as string;
+    isCorrect = (userStr || '').trim() === (correctStr || '').trim();
+    if (!isCorrect) {
+      explanation = `正确答案是: ${correctStr}`;
+    }
+  } else if (isMultipleType) {
+    const userArr = (Array.isArray(userAnswer) ? userAnswer : [userAnswer]).filter(Boolean).sort();
+    const correctArr = (Array.isArray(correctAnswer) ? correctAnswer : [correctAnswer]).filter(Boolean).sort();
+    isCorrect = userArr.length > 0 && JSON.stringify(userArr) === JSON.stringify(correctArr);
     if (!isCorrect) {
       explanation = `正确答案是: ${correctArr.join('、')}`;
     }
-  } else if (type === 'judgment') {
-    isCorrect = userAnswer === correctAnswer;
+  } else if (isJudgeType) {
+    let userVal = Array.isArray(userAnswer) ? userAnswer[0] : userAnswer;
+    let correctVal = Array.isArray(correctAnswer) ? correctAnswer[0] : correctAnswer;
+    const normalize = (v: unknown) => {
+      const s = String(v || '');
+      if (s === 'A' || s === '正确') return '正确';
+      if (s === 'B' || s === '错误') return '错误';
+      return s;
+    };
+    isCorrect = normalize(userVal) === normalize(correctVal);
     if (!isCorrect) {
-      explanation = `正确答案是: ${correctAnswer === 'true' ? '正确' : '错误'}`;
+      explanation = `正确答案是: ${normalize(correctVal)}`;
     }
   }
 

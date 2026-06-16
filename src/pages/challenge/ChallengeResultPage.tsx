@@ -1,4 +1,4 @@
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useEffect } from 'react-router-dom';
 import { ArrowLeft, Trophy, CheckCircle, XCircle, Clock, Target, Star, RotateCcw, ChevronRight } from 'lucide-react';
 import Card from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
@@ -9,8 +9,13 @@ import { cn, formatTime, formatDate } from '../../utils/helpers';
 
 const ChallengeResultPage = () => {
   const { attemptId } = useParams<{ attemptId: string }>();
-  const { getAttemptById } = useChallengeStore();
-  const { userProgress } = useUserStore();
+  const { getAttemptById, initAttempts } = useChallengeStore();
+  const { userProgress, initUser } = useUserStore();
+
+  useEffect(() => {
+    initAttempts();
+    initUser();
+  }, [initAttempts, initUser]);
 
   const attempt = getAttemptById(attemptId || '');
   const level = attempt ? challengeLevels.find((l) => l.id === attempt.levelId) : undefined;

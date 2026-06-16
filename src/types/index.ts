@@ -204,7 +204,9 @@ export interface Mistake {
   questionContent: string;
   timestamp: number;
   reviewed: boolean;
+  mastered: boolean;
   retryCount: number;
+  correctRetryCount: number;
   explanation: string;
   score: number;
   errorDetails?: ValidationErrorDetail[];

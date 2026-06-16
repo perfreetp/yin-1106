@@ -7,16 +7,20 @@ interface MistakesState {
   filterType: ErrorType | 'all';
   filterSource: 'practice' | 'challenge' | 'all';
   searchKeyword: string;
+  showMastered: boolean;
 
   initMistakes: () => void;
   getFilteredMistakes: () => Mistake[];
   getMistakeById: (id: string) => Mistake | undefined;
   markAsReviewed: (id: string) => void;
+  markAsMastered: (sourceId: string, type?: 'practice' | 'challenge') => void;
+  markMistakeCorrect: (id: string) => void;
   deleteMistake: (id: string) => void;
   clearAllMistakes: () => void;
   setFilterType: (type: ErrorType | 'all') => void;
   setFilterSource: (source: 'practice' | 'challenge' | 'all') => void;
   setSearchKeyword: (keyword: string) => void;
+  setShowMastered: (show: boolean) => void;
   getMistakesByKnowledgePoint: (knowledgePoint: string) => Mistake[];
   getMistakeStats: () => {
     total: number;
@@ -24,24 +28,38 @@ interface MistakesState {
     bySource: { practice: number; challenge: number };
     reviewed: number;
     unreviewed: number;
+    mastered: number;
+    pending: number;
   };
   retryMistake: (id: string) => void;
 }
+
+const normalizeMistake = (m: Partial<Mistake>): Mistake => ({
+  ...m,
+  mastered: typeof m.mastered === 'boolean' ? m.mastered : false,
+  reviewed: typeof m.reviewed === 'boolean' ? m.reviewed : false,
+  retryCount: m.retryCount || 0,
+  correctRetryCount: m.correctRetryCount || 0,
+  score: m.score || 0,
+}) as Mistake;
 
 export const useMistakesStore = create<MistakesState>((set, get) => ({
   mistakes: [],
   filterType: 'all',
   filterSource: 'all',
   searchKeyword: '',
+  showMastered: true,
 
   initMistakes: () => {
-    const saved = storage.get<Mistake[]>('mistakes', []);
-    set({ mistakes: saved });
+    const saved = storage.get<Partial<Mistake>[]>('mistakes', []);
+    const normalized = saved.map(normalizeMistake);
+    set({ mistakes: normalized });
   },
 
   getFilteredMistakes: () => {
-    const { mistakes, filterType, filterSource, searchKeyword } = get();
+    const { mistakes, filterType, filterSource, searchKeyword, showMastered } = get();
     return mistakes.filter((mistake) => {
+      if (!showMastered && mistake.mastered) return false;
       const matchesType = filterType === 'all' || mistake.errorType === filterType;
       const matchesSource = filterSource === 'all' || mistake.type === filterSource;
       const matchesSearch =
@@ -59,6 +77,41 @@ export const useMistakesStore = create<MistakesState>((set, get) => ({
       const newMistakes = state.mistakes.map((m) =>
         m.id === id ? { ...m, reviewed: true } : m
       );
+      storage.set('mistakes', newMistakes);
+      return { mistakes: newMistakes };
+    });
+  },
+
+  markAsMastered: (sourceId, type) => {
+    set((state) => {
+      const newMistakes = state.mistakes.map((m) => {
+        const matches = m.sourceId === sourceId && (!type || m.type === type);
+        if (matches) {
+          return { ...m, mastered: true, reviewed: true };
+        }
+        return m;
+      });
+      storage.set('mistakes', newMistakes);
+      return { mistakes: newMistakes };
+    });
+  },
+
+  markMistakeCorrect: (id) => {
+    set((state) => {
+      const newMistakes = state.mistakes.map((m) => {
+        if (m.id === id) {
+          const newCorrectCount = (m.correctRetryCount || 0) + 1;
+          const mastered = newCorrectCount >= 2 || m.reviewed;
+          return {
+            ...m,
+            correctRetryCount: newCorrectCount,
+            retryCount: m.retryCount + 1,
+            mastered,
+            reviewed: true,
+          };
+        }
+        return m;
+      });
       storage.set('mistakes', newMistakes);
       return { mistakes: newMistakes };
     });
@@ -83,6 +136,8 @@ export const useMistakesStore = create<MistakesState>((set, get) => ({
 
   setSearchKeyword: (keyword) => set({ searchKeyword: keyword }),
 
+  setShowMastered: (show) => set({ showMastered: show }),
+
   getMistakesByKnowledgePoint: (knowledgePoint) => {
     return get().mistakes.filter((m) => m.knowledgePoint === knowledgePoint);
   },
@@ -100,10 +155,17 @@ export const useMistakesStore = create<MistakesState>((set, get) => ({
     const bySource = { practice: 0, challenge: 0 };
     let reviewed = 0;
     let unreviewed = 0;
+    let mastered = 0;
+    let pending = 0;
 
     mistakes.forEach((m) => {
       byType[m.errorType] = (byType[m.errorType] || 0) + 1;
       bySource[m.type]++;
+      if (m.mastered) {
+        mastered++;
+      } else {
+        pending++;
+      }
       if (m.reviewed) {
         reviewed++;
       } else {
@@ -117,6 +179,8 @@ export const useMistakesStore = create<MistakesState>((set, get) => ({
       bySource,
       reviewed,
       unreviewed,
+      mastered,
+      pending,
     };
   },
 

@@ -17,7 +17,7 @@ const errorTypeColors: Record<ErrorType, string> = {
 
 const MistakeDetailPage = () => {
   const { id } = useParams<{ id: string }>();
-  const { getMistakeById, markAsReviewed, deleteMistake, retryMistake } = useMistakesStore();
+  const { getMistakeById, markAsReviewed, markMistakeCorrect, markAsMastered, deleteMistake, retryMistake, initMistakes } = useMistakesStore();
 
   const mistake = getMistakeById(id || '');
 
@@ -50,7 +50,7 @@ const MistakeDetailPage = () => {
             <ArrowLeft className="w-5 h-5 text-gray-600" />
           </Link>
           <div>
-            <div className="flex items-center gap-2 mb-1">
+            <div className="flex items-center gap-2 mb-1 flex-wrap">
               <span className={cn(
                 'px-2 py-0.5 text-xs font-medium rounded-md',
                 errorTypeColors[mistake.errorType]
@@ -63,7 +63,17 @@ const MistakeDetailPage = () => {
               )}>
                 {mistake.type === 'practice' ? '案例演练' : '闯关审校'}
               </span>
-              {mistake.reviewed && (
+              {mistake.mastered ? (
+                <span className="px-2 py-0.5 text-xs font-medium rounded-md bg-emerald-100 text-emerald-700 flex items-center gap-1">
+                  <CheckCircle className="w-3 h-3" />
+                  已掌握
+                </span>
+              ) : (
+                <span className="px-2 py-0.5 text-xs font-medium rounded-md bg-orange-100 text-orange-700">
+                  待复习
+                </span>
+              )}
+              {mistake.reviewed && !mistake.mastered && (
                 <span className="px-2 py-0.5 text-xs font-medium rounded-md bg-green-100 text-green-700">
                   已复习
                 </span>
@@ -197,15 +207,38 @@ const MistakeDetailPage = () => {
                 <span className="text-sm text-gray-500">重做次数</span>
                 <span className="text-sm font-medium text-gray-900">{mistake.retryCount} 次</span>
               </div>
+              {mistake.correctRetryCount > 0 && (
+                <div className="flex items-center justify-between py-2 border-b border-gray-100">
+                  <span className="text-sm text-gray-500">连续做对</span>
+                  <span className="text-sm font-bold text-emerald-600">{mistake.correctRetryCount} 次 🔥</span>
+                </div>
+              )}
               <div className="flex items-center justify-between py-2">
                 <span className="text-sm text-gray-500">状态</span>
                 <span className={cn(
                   'px-2 py-0.5 text-xs font-medium rounded-md',
+                  mistake.mastered ? 'bg-emerald-100 text-emerald-700' : 
                   mistake.reviewed ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'
                 )}>
-                  {mistake.reviewed ? '已复习' : '待复习'}
+                  {mistake.mastered ? '已掌握 ✓' : mistake.reviewed ? '已复习' : '待复习'}
                 </span>
               </div>
+              {!mistake.mastered && (
+                <div className="pt-2">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    fullWidth
+                    icon={<CheckCircle className="w-4 h-4" />}
+                    onClick={() => {
+                      markAsMastered(mistake.sourceId, mistake.type);
+                    }}
+                    className="text-emerald-700 hover:bg-emerald-50"
+                  >
+                    标记为已掌握
+                  </Button>
+                </div>
+              )}
             </Card.Body>
           </Card>
 

@@ -4,6 +4,7 @@ import { exercises, exerciseCategories } from '../data/exercises';
 import { validateAnswer } from '../utils/validation';
 import { generateId } from '../utils/helpers';
 import { storage } from '../utils/storage';
+import { useMistakesStore } from './useMistakesStore';
 
 interface PracticeState {
   exercises: PracticeExercise[];
@@ -112,7 +113,7 @@ export const usePracticeStore = create<PracticeState>((set, get) => ({
     const validationResult = result || validateAnswer(userAnswer, exercise, selectedBasisId || undefined);
     set({ validationResult: validationResult });
 
-    if (!validationResult.isValid) {
+    if (!validationResult.isCorrect || validationResult.errors.length > 0) {
       let errorType: ErrorType = 'content_incomplete';
       if (validationResult.missingKeywords && validationResult.missingKeywords.length > 0) {
         errorType = 'missing_keyword';
@@ -120,11 +121,23 @@ export const usePracticeStore = create<PracticeState>((set, get) => ({
       if (validationResult.errors.some((e) => e.includes('法定依据'))) {
         errorType = 'legal_basis_mismatch';
       }
+      if (validationResult.errors.some((e) => e.includes('时限') || e.includes('工作日'))) {
+        errorType = 'time_limit_error';
+      }
+      if (validationResult.errors.some((e) => e.includes('减免') || e.includes('容缺') || e.includes('承诺'))) {
+        errorType = 'reduction_invalid';
+      }
       get().addToMistakes(exercise, userAnswer, errorType);
     }
 
-    if (validationResult.isValid) {
+    if (validationResult.isCorrect && validationResult.errors.length === 0) {
       get().markAsCompleted(exercise.id);
+      try {
+        useMistakesStore.getState().initMistakes();
+        useMistakesStore.getState().markAsMastered(exercise.id, 'practice');
+      } catch (_) {
+        // ignore
+      }
     }
 
     return validationResult;
@@ -176,7 +189,7 @@ export const usePracticeStore = create<PracticeState>((set, get) => ({
   },
 
   addToMistakes: (exercise, userAnswer, errorType) => {
-    const mistakes = storage.get<Mistake[]>('mistakes', []);
+    const mistakes = storage.get<Partial<Mistake>[]>('mistakes', []);
     const existingIndex = mistakes.findIndex(
       (m) => m.exerciseId === exercise.id && m.type === 'practice'
     );
@@ -190,8 +203,10 @@ export const usePracticeStore = create<PracticeState>((set, get) => ({
               userAnswer,
               errorType,
               timestamp: Date.now(),
-              retryCount: m.retryCount + 1,
+              retryCount: (m.retryCount || 0) + 1,
               reviewed: false,
+              mastered: false,
+              correctRetryCount: m.correctRetryCount || 0,
             }
           : m
       );
@@ -209,7 +224,9 @@ export const usePracticeStore = create<PracticeState>((set, get) => ({
         questionContent: exercise.question,
         timestamp: Date.now(),
         reviewed: false,
+        mastered: false,
         retryCount: 0,
+        correctRetryCount: 0,
         explanation: exercise.explanation,
         score: 0,
       };
@@ -217,5 +234,10 @@ export const usePracticeStore = create<PracticeState>((set, get) => ({
     }
 
     storage.set('mistakes', newMistakes);
+    try {
+      useMistakesStore.getState().initMistakes();
+    } catch (_) {
+      // ignore
+    }
   },
 }));
