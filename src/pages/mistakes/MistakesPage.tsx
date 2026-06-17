@@ -5,6 +5,7 @@ import Button from '../../components/ui/Button';
 import { useMistakesStore } from '../../store/useMistakesStore';
 import { ErrorType } from '../../types';
 import { cn, getErrorTypeLabel, formatDate } from '../../utils/helpers';
+import { challengeLevels } from '../../data/challenges';
 
 const errorTypeLabels: Record<ErrorType, string> = {
   missing_keyword: '关键词缺失',
@@ -51,7 +52,11 @@ const MistakesPage = () => {
     if (sourceType === 'practice') {
       window.location.href = `/practice/${sourceId}`;
     } else {
-      window.location.href = `/challenge/${sourceId}`;
+      const level = challengeLevels.find(l => l.questionIds.includes(sourceId));
+      const targetLevelId = level ? level.id : challengeLevels[0]?.id;
+      if (targetLevelId) {
+        window.location.href = `/challenge/${targetLevelId}`;
+      }
     }
   };
 

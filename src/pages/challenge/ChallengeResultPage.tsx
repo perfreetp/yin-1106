@@ -1,4 +1,5 @@
-import { useParams, Link, useEffect } from 'react-router-dom';
+import { useEffect } from 'react';
+import { useParams, Link } from 'react-router-dom';
 import { ArrowLeft, Trophy, CheckCircle, XCircle, Clock, Target, Star, RotateCcw, ChevronRight } from 'lucide-react';
 import Card from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
@@ -32,7 +33,7 @@ const ChallengeResultPage = () => {
     );
   }
 
-  const isPassed = attempt.correctRate >= level.passingScore;
+  const isPassed = attempt.passed;
   const hasNextLevel = userProgress.unlockedLevels.includes(
     challengeLevels[challengeLevels.findIndex((l) => l.id === level.id) + 1]?.id || ''
   );
@@ -89,7 +90,7 @@ const ChallengeResultPage = () => {
               正确率 <span className={cn(
                 'font-bold',
                 isPassed ? 'text-green-600' : 'text-amber-600'
-              )}>{attempt.correctRate}%</span>
+              )}>{Math.round(attempt.correctRate)}%</span>
             </p>
           </div>
 
@@ -120,7 +121,9 @@ const ChallengeResultPage = () => {
             <div className="mt-8">
               <h3 className="text-lg font-bold text-gray-900 mb-4">知识点掌握情况</h3>
               <div className="space-y-3">
-                {attempt.knowledgePointStats.map((stat, index) => (
+                {[...attempt.knowledgePointStats]
+                  .sort((a, b) => b.errorRate - a.errorRate)
+                  .map((stat, index) => (
                   <div key={index} className="flex items-center gap-4">
                     <span className="w-28 text-sm text-gray-600 truncate">{stat.knowledgePoint}</span>
                     <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
@@ -143,6 +146,18 @@ const ChallengeResultPage = () => {
                   </div>
                 ))}
               </div>
+              {attempt.knowledgePointStats.some(s => s.errorRate >= 40) && (
+                <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-xl">
+                  <p className="text-sm text-red-700">
+                    <span className="font-bold">薄弱知识点：</span>
+                    {attempt.knowledgePointStats
+                      .filter(s => s.errorRate >= 40)
+                      .map(s => s.knowledgePoint)
+                      .join('、')}
+                    ，建议重点复习。
+                  </p>
+                </div>
+              )}
             </div>
           )}
         </Card.Body>

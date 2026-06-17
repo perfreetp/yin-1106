@@ -20,7 +20,7 @@ const ChallengePage = () => {
     isSubmitted,
     showResult,
     currentAnswer,
-    questions,
+    currentQuestions,
     initChallenge,
     setCurrentAnswer,
     submitAnswer,
@@ -31,10 +31,10 @@ const ChallengePage = () => {
 
   const [showHint, setShowHint] = useState(false);
 
-  const currentQuestion: ChallengeQuestion | undefined = questions[currentQuestionIndex];
-  const totalQuestions = questions.length;
+  const currentQuestion: ChallengeQuestion | undefined = currentQuestions[currentQuestionIndex];
+  const totalQuestions = currentQuestions.length;
   const isLastQuestion = currentQuestionIndex === totalQuestions - 1;
-  const timeProgress = level ? (timeRemaining / (level.timeLimit * 60)) * 100 : 0;
+  const timeProgress = level ? (timeRemaining / level.timeLimit) * 100 : 0;
   const isTimeWarning = timeRemaining <= 30;
 
   useEffect(() => {
@@ -125,7 +125,9 @@ const ChallengePage = () => {
     );
   }
 
-  const currentAnswerData = answers[currentQuestionIndex];
+  const currentAnswerData = currentQuestion 
+    ? answers.find(a => a.questionId === currentQuestion.id) 
+    : undefined;
 
   return (
     <div className="space-y-6">
@@ -163,8 +165,8 @@ const ChallengePage = () => {
       </div>
 
       <div className="flex gap-2 overflow-x-auto pb-2">
-        {questions.map((_, index) => {
-          const answer = answers[index];
+        {currentQuestions.map((q, index) => {
+          const answer = answers.find(a => a.questionId === q.id);
           let status = 'pending';
           if (answer) {
             status = answer.isCorrect ? 'correct' : 'incorrect';

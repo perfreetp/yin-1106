@@ -82,7 +82,7 @@ export const useChallengeStore = create<ChallengeState>((set, get) => ({
       userAnswers: {},
       answers: [],
       startTime: null,
-      timeRemaining: level ? level.timeLimit * 60 : 0,
+      timeRemaining: level ? level.timeLimit : 0,
       attemptId: null,
       isSubmitted: false,
       isPaused: false,
@@ -116,7 +116,7 @@ export const useChallengeStore = create<ChallengeState>((set, get) => ({
       userAnswers: {},
       answers: [],
       startTime: Date.now(),
-      timeRemaining: level.timeLimit * 60,
+      timeRemaining: level.timeLimit,
       attemptId: generateId(),
       isSubmitted: false,
       isPaused: false,
@@ -213,15 +213,17 @@ export const useChallengeStore = create<ChallengeState>((set, get) => ({
 
       let newMistakes;
       if (existingIndex >= 0) {
+        const existingMistake = mistakes[existingIndex];
+        const wasMastered = existingMistake.mastered === true;
         newMistakes = mistakes.map((m, i) =>
           i === existingIndex
             ? { 
                 ...m, 
                 retryCount: (m.retryCount || 0) + 1, 
                 timestamp: Date.now(), 
-                reviewed: false,
-                mastered: false,
-                correctRetryCount: m.correctRetryCount || 0,
+                reviewed: wasMastered ? true : false,
+                mastered: wasMastered,
+                correctRetryCount: wasMastered ? (m.correctRetryCount || 0) : 0,
               }
             : m
         );

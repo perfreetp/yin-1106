@@ -196,6 +196,8 @@ export const usePracticeStore = create<PracticeState>((set, get) => ({
 
     let newMistakes;
     if (existingIndex >= 0) {
+      const existingMistake = mistakes[existingIndex];
+      const wasMastered = existingMistake.mastered === true;
       newMistakes = mistakes.map((m, i) =>
         i === existingIndex
           ? {
@@ -204,9 +206,9 @@ export const usePracticeStore = create<PracticeState>((set, get) => ({
               errorType,
               timestamp: Date.now(),
               retryCount: (m.retryCount || 0) + 1,
-              reviewed: false,
-              mastered: false,
-              correctRetryCount: m.correctRetryCount || 0,
+              reviewed: wasMastered ? true : false,
+              mastered: wasMastered,
+              correctRetryCount: wasMastered ? (m.correctRetryCount || 0) : 0,
             }
           : m
       );
